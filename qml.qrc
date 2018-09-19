@@ -1,0 +1,17 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>main.qml</file>
+        <file>qtquickcontrols2.conf</file>
+        <file>Magnetometer.qml</file>
+        <file>PowerManagement.qml</file>
+        <file>Accelerometer.qml</file>
+        <file>Gyroscope.qml</file>
+        <file>SidePanel.qml</file>
+        <file>images/toradexlogo.png</file>
+        <file>images/sleep.png</file>
+        <file>images/shutdown.png</file>
+        <file>RemoteMouseIndicator.qml</file>
+        <file>Settings.qml</file>
+    </qresource>
+</RCC>

@@ -1,0 +1,28 @@
+#include <QPointF>
+class RemoteBackend {
+    PROP(QString serverAddress READONLY)
+    PROP(bool remotingEnabled)
+
+    SLOT(QPointF accelerationData(int sensor, int at))
+    SLOT(int accelerationDataAxis())
+
+    SLOT(QPointF gyroData(int sensor, int at))
+    SLOT(int gyroDataAxis())
+
+    SLOT(QPointF magnetoData(int sensor, int at))
+    SLOT(int magnetoDataAxis())
+
+    SLOT(QPointF powerData(int sensor, int at))
+    SLOT(int powerDataAxis())
+
+    SLOT(int storageDepth())
+    SLOT(QString test())
+
+    SLOT(void shutdown())
+    SLOT(void sleep())
+
+    SIGNAL(accelerationDataChanged())
+    SIGNAL(gyroDataChanged())
+    SIGNAL(magnetoDataChanged())
+    SIGNAL(powerDataChanged())
+};

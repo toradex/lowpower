@@ -1,0 +1,4 @@
+class RemoteEventHandler {
+    SIGNAL(mouseEvent(int type, const QPointF &localPos, int buttons, int modifiers))
+    SIGNAL(keyEvent(int type, int key, int modifiers, const QString &text, bool autorep, ushort count))
+};
