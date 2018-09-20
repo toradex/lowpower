@@ -4,9 +4,11 @@
 #include <QQmlComponent>
 
 #include "backend.h"
-#include "remotebackendwrapper.h"
+#include "rep_remoteeventhandler_replica.h"
+#include "rep_remotebackend_replica.h"
 #include "remoteeventhandler.h"
 #include "platformcontrolmock.h"
+#include "sensordata.h"
 
 int main(int argc, char *argv[])
 {
@@ -19,28 +21,32 @@ int main(int argc, char *argv[])
         QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     }
 
+    // Allow SensorData in queued connections
+    qRegisterMetaType<SensorData>();
+
     QApplication app(argc, argv);
 
-    QScopedPointer<BackEndInterface> backend;
+    QScopedPointer<QObject> backend;
 
-    RemoteEventHandler remoteEventHandler;
     QQmlApplicationEngine engine;
-    RemoteBackEndWrapper *backendWrapper;
-    RemoteBackendReplica *replica;
-    QRemoteObjectNode *remoteClient;
 
+    QRemoteObjectNode *remoteClient;
+    RemoteEventHandler remoteEventHandler;
+
+    // qmlRegisterType<SensorData>("com.toradex.examples.sensordata", 1, 0, "SensorData");
     qmlRegisterType<BackEnd>("com.toradex.examples.backend", 1, 0, "RemoteBackEnd");
 
     if (app.platformName() == QLatin1String("webgl")) {
+        RemoteBackendReplica *replica;
         remoteClient = new QRemoteObjectNode(&app);
         remoteClient->connectToNode(QUrl("local:backendServer"));
         replica = remoteClient->acquire<RemoteBackendReplica>();
 
+        /* Process the events, so that the the replica is initialized before we start the GUI */
         while(!replica->isInitialized())
             app.processEvents();
 
-        backendWrapper = new RemoteBackEndWrapper(replica);
-        backend.reset(backendWrapper);
+        backend.reset(replica);
     } else {
         PlatformControl *controller = new PlatformControlMock(&app);
         backend.reset(new BackEnd(controller));

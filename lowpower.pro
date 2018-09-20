@@ -18,7 +18,7 @@ SOURCES += \
     remoteeventhandler.cpp \
     platformcontrol.cpp \
     platformcontrolmock.cpp \
-    remotebackendwrapper.cpp
+    sensordata.cpp
 
 RESOURCES += qml.qrc
 
@@ -27,7 +27,7 @@ HEADERS += \
     remoteeventhandler.h \
     platformcontrol.h \
     platformcontrolmock.h \
-    remotebackendwrapper.h
+    sensordata.h
 
 DISTFILES += \
     remoteeventhandler.rep \

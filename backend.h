@@ -10,6 +10,7 @@
 
 #include "rep_remotebackend_source.h"
 #include "platformcontrol.h"
+#include "sensordata.h"
 
 class ReadOnlyRemoteBackend;
 
@@ -24,36 +25,29 @@ public:
     BackEndInterface(QObject *parent = nullptr) : QObject(parent) {}
     ~BackEndInterface(){}
 
-    virtual Q_INVOKABLE QPointF accelerationData(int sensor, int at) const {}
-    virtual Q_INVOKABLE int accelerationDataAxis() const {}
+    virtual Q_INVOKABLE int accelerationDataAxis() const {return 0;}
+    virtual Q_INVOKABLE int gyroDataAxis() const {return 0;}
+    virtual Q_INVOKABLE int magnetoDataAxis() const {return 0;}
+    virtual Q_INVOKABLE int powerDataAxis() const {return 0;}
 
-    virtual Q_INVOKABLE QPointF gyroData(int sensor, int at) const {}
-    virtual Q_INVOKABLE int gyroDataAxis() const {}
-
-    virtual Q_INVOKABLE QPointF magnetoData(int sensor, int at) const {}
-    virtual Q_INVOKABLE int magnetoDataAxis() const {}
-
-    virtual Q_INVOKABLE QPointF powerData(int sensor, int at) const {}
-    virtual Q_INVOKABLE int powerDataAxis() const {}
-
-    virtual Q_INVOKABLE int storageDepth() const {}
+    virtual Q_INVOKABLE int storageDepth() const {return 0;}
 
 public Q_SLOTS:
     // Remote stuff
-    virtual QString serverAddress() const {}
+    virtual QString serverAddress() const {return "";}
 
-    virtual bool remotingEnabled() const {}
-    virtual void setRemotingEnabled(bool enable) {}
+    virtual bool remotingEnabled() const {return false;}
+    virtual void setRemotingEnabled(bool enable) {(void)enable;}
 
     virtual void shutdown() const {}
     virtual void sleep() const {}
-    virtual QString test() const {}
+    virtual QString test() const {return "";}
 
 Q_SIGNALS:
-    void accelerationDataChanged();
-    void gyroDataChanged();
-    void magnetoDataChanged();
-    void powerDataChanged();
+    void accelerationDataChanged(const SensorData &sensorData);
+    void gyroDataChanged(const SensorData &sensorData);
+    void magnetoDataChanged(const SensorData &sensorData);
+    void powerDataChanged(const SensorData &sensorData);
 
 
     // Remote stuff
@@ -72,16 +66,9 @@ public:
 
     void initializeData(QVector<QVector<QPointF> > &data, int rowCount, int colCount);
 
-    Q_INVOKABLE QPointF accelerationData(int sensor, int at) const;
     Q_INVOKABLE int accelerationDataAxis() const;
-
-    Q_INVOKABLE QPointF gyroData(int sensor, int at) const;
     Q_INVOKABLE int gyroDataAxis() const;
-
-    Q_INVOKABLE QPointF magnetoData(int sensor, int at) const;
     Q_INVOKABLE int magnetoDataAxis() const;
-
-    Q_INVOKABLE QPointF powerData(int sensor, int at) const;
     Q_INVOKABLE int powerDataAxis() const;
 
     Q_INVOKABLE int storageDepth() const;
@@ -100,10 +87,10 @@ public Q_SLOTS:
     QString test() const;
 
 Q_SIGNALS:
-    void accelerationDataChanged();
-    void gyroDataChanged();
-    void magnetoDataChanged();
-    void powerDataChanged();
+    void accelerationDataChanged(const SensorData &sensorData);
+    void gyroDataChanged(const SensorData &sensorData);
+    void magnetoDataChanged(const SensorData &sensorData);
+    void powerDataChanged(const SensorData &sensorData);
 
 
     // Remote stuff
@@ -112,10 +99,10 @@ Q_SIGNALS:
 
 
 private:
-    QVector<QVector<QPointF>> m_accelerationData;
-    QVector<QVector<QPointF>> m_gyroData;
-    QVector<QVector<QPointF>> m_magnetoData;
-    QVector<QVector<QPointF>> m_powerData;
+    SensorData m_accelerationData;
+    SensorData m_gyroData;
+    SensorData m_magnetoData;
+    SensorData m_powerData;
 
     PlatformControl &m_controller;
 
@@ -144,13 +131,9 @@ public:
     bool remotingEnabled() const { return m_backend->remotingEnabled(); }
     void setRemotingEnabled(bool) { }
 
-    QPointF accelerationData(int sensor, int at) { return m_backend->accelerationData(sensor, at); }
     int accelerationDataAxis() { return m_backend->accelerationDataAxis(); }
-    QPointF gyroData(int sensor, int at) { return m_backend->gyroData(sensor, at); }
     int gyroDataAxis() { return m_backend->gyroDataAxis(); }
-    QPointF magnetoData(int sensor, int at) { return m_backend->magnetoData(sensor, at); }
     int magnetoDataAxis() { return m_backend->magnetoDataAxis(); }
-    QPointF powerData(int sensor, int at) { return m_backend->powerData(sensor, at); }
     int powerDataAxis() { return m_backend->powerDataAxis(); }
     int storageDepth() { return m_backend->storageDepth(); }
     void shutdown(){ m_backend->shutdown(); }

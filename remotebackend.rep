@@ -1,18 +1,13 @@
 #include <QPointF>
+#include "sensordata.h"
+
 class RemoteBackend {
     PROP(QString serverAddress READONLY)
     PROP(bool remotingEnabled)
 
-    SLOT(QPointF accelerationData(int sensor, int at))
     SLOT(int accelerationDataAxis())
-
-    SLOT(QPointF gyroData(int sensor, int at))
     SLOT(int gyroDataAxis())
-
-    SLOT(QPointF magnetoData(int sensor, int at))
     SLOT(int magnetoDataAxis())
-
-    SLOT(QPointF powerData(int sensor, int at))
     SLOT(int powerDataAxis())
 
     SLOT(int storageDepth())
@@ -21,8 +16,8 @@ class RemoteBackend {
     SLOT(void shutdown())
     SLOT(void sleep())
 
-    SIGNAL(accelerationDataChanged())
-    SIGNAL(gyroDataChanged())
-    SIGNAL(magnetoDataChanged())
-    SIGNAL(powerDataChanged())
+    SIGNAL(accelerationDataChanged(SensorData sensorData))
+    SIGNAL(gyroDataChanged(SensorData sensorData))
+    SIGNAL(magnetoDataChanged(SensorData sensorData))
+    SIGNAL(powerDataChanged(SensorData sensorData))
 };

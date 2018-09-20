@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.3
 import QtQml.RemoteObjects 1.0
 
 import com.toradex.examples.backend 1.0
+//import com.toradex.examples.sensordata 1.0
 
 ApplicationWindow {
     id: root
@@ -24,11 +25,11 @@ ApplicationWindow {
         return Qt.point(x,y);
     }
 
-    function updateAxis(axis, nr, fun) {
+    function updateAxis(axis, sensorData, idx) {
         axis.clear();
-        for (var i = 0; i < storageDepth; i++) {
-            var val = fun(nr, i);
-            axis.append(storageDepth - i - 1, val.y);
+        for (var i = 0; i < sensorData.points; i++) {
+            var val = sensorData.at(idx, i);
+            axis.append(sensorData.points - i - 1, val.y);
         }
     }
 
@@ -37,31 +38,25 @@ ApplicationWindow {
         // created in Cpp
         target: backend
         onAccelerationDataChanged: {
-            // if (!initialized) initCharts();
-            eventCount++;
-            bla.text = "eventCount: " + eventCount;
-            updateAxis(accelerometer.xAxis, 0, backend.accelerationData);
-            updateAxis(accelerometer.yAxis, 1, backend.accelerationData);
-            updateAxis(accelerometer.zAxis, 2, backend.accelerationData);
+            updateAxis(accelerometer.xAxis, sensorData, 0);
+            updateAxis(accelerometer.yAxis, sensorData, 1);
+            updateAxis(accelerometer.zAxis, sensorData, 2);
         }
 
         onGyroDataChanged: {
-            // if (!initialized) initCharts();
-            updateAxis(gyroscope.xAxis, 0, backend.gyroData);
-            updateAxis(gyroscope.yAxis, 1, backend.gyroData);
-            updateAxis(gyroscope.zAxis, 2, backend.gyroData);
+            updateAxis(gyroscope.xAxis, sensorData, 0);
+            updateAxis(gyroscope.yAxis, sensorData, 1);
+            updateAxis(gyroscope.zAxis, sensorData, 2);
         }
 
         onMagnetoDataChanged: {
-            // if (!initialized) initCharts();
-            updateAxis(magnetometer.xAxis, 0, backend.magnetoData);
-            updateAxis(magnetometer.yAxis, 1, backend.magnetoData);
-            updateAxis(magnetometer.zAxis, 2, backend.magnetoData);
+            updateAxis(magnetometer.xAxis, sensorData, 0);
+            updateAxis(magnetometer.yAxis, sensorData, 1);
+            updateAxis(magnetometer.zAxis, sensorData, 2);
         }
 
         onPowerDataChanged: {
-            // if (!initialized) initCharts();
-            updateAxis(power.xAxis, 0, backend.powerData);
+            updateAxis(power.xAxis, sensorData, 0);
         }
     }
 
@@ -147,43 +142,7 @@ ApplicationWindow {
                 }
             }
         }
-        Label {
-            id: bla
-            text: "bla"
-        }
     }
-
-    function initChart(axis, depth) {
-        for (var i = 0; i < depth; i++) {
-            axis.append(i, 0);
-        }
-    }
-
-    function initCharts() {
-        try {
-            storageDepth = backend.storageDepth();
-            bla.text = "start " + storageDepth;
-        }
-        catch (ex) {
-            bla.text = "error " + ex.message;
-        }
-
-        initChart(accelerometer.xAxis, storageDepth);
-        initChart(accelerometer.yAxis, storageDepth);
-        initChart(accelerometer.zAxis, storageDepth);
-
-        initChart(gyroscope.xAxis, storageDepth);
-        initChart(gyroscope.yAxis, storageDepth);
-        initChart(gyroscope.zAxis, storageDepth);
-
-        initChart(magnetometer.xAxis, storageDepth);
-        initChart(magnetometer.yAxis, storageDepth);
-        initChart(magnetometer.zAxis, storageDepth);
-        initChart(power.xAxis, storageDepth);
-        // initialized = true;
-    }
-
-    Component.onCompleted: initCharts()
 
     RemoteMouseIndicator {
         id: remoteMouse

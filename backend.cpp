@@ -5,32 +5,13 @@
 
 #include "backend.h"
 
-BackEnd::BackEnd(PlatformControl *controller, QObject *parent) : BackEndInterface(parent), m_controller(*controller)
-{
-    initializeData(m_accelerationData, 3, storageDepth());
-    initializeData(m_gyroData, 3, storageDepth());
-    initializeData(m_magnetoData, 3, storageDepth());
-    initializeData(m_powerData, 1, storageDepth());
+#define STORAGE_DEPTH 11
 
+BackEnd::BackEnd(PlatformControl *controller, QObject *parent) : BackEndInterface(parent),
+    m_accelerationData(3, STORAGE_DEPTH), m_gyroData(3, STORAGE_DEPTH), m_magnetoData(3, STORAGE_DEPTH), m_powerData(1, STORAGE_DEPTH),
+    m_controller(*controller)
+{
     connect(&m_controller, SIGNAL(dataReceived(const QString &)), this, SLOT(processData(const QString &)));
-}
-
-void BackEnd::initializeData(QVector<QVector<QPointF> > &data, int rowCount, int colCount)
-{
-    // Remove previous data
-    data.clear();
-
-    // Append the new data depending on the type
-    for (int i(0); i < rowCount; i++) {
-        QVector<QPointF> points;
-        points.reserve(colCount);
-        for (int j(0); j < colCount; j++) {
-            qreal x(j);
-            qreal y(0);
-            points.append(QPointF(x, y));
-        }
-        data.append(points);
-    }
 }
 
 void BackEnd::processData(const QString &str)
@@ -53,45 +34,40 @@ void BackEnd::processData(const QString &str)
         }
 
         if (list.at(0) == "acc") {
-            m_accelerationData[i].push_front(QPointF(m_accelerationPos, val));
-            m_accelerationData[i].pop_back();
+            m_accelerationData.push_front(i, QPointF(m_accelerationPos, val));
+            m_accelerationData.pop_back(i);
 
         } else if (list.at(0) == "gyro") {
-            m_gyroData[i].push_front(QPointF(m_gyroPos, val));
-            m_gyroData[i].pop_back();
+            m_gyroData.push_front(i, QPointF(m_gyroPos, val));
+            m_gyroData.pop_back(i);
         } else if (list.at(0) == "mag") {
-            m_magnetoData[i].push_front(QPointF(m_magnetoPos, val));
-            m_magnetoData[i].pop_back();
+            m_magnetoData.push_front(i, QPointF(m_magnetoPos, val));
+            m_magnetoData.pop_back(i);
         } else if (list.at(0) == "alti") {
-            m_powerData[i].push_front(QPointF(m_powerPos, val));
-            m_powerData[i].pop_back();
+            m_powerData.push_front(i, QPointF(m_powerPos, val));
+            m_powerData.pop_back(i);
         }
    }
 
     if (list.at(0) == "acc") {
         m_accelerationPos++;
         m_accelerationPos %= storageDepth();
-        emit accelerationDataChanged();
+        emit accelerationDataChanged(m_accelerationData);
     } else if (list.at(0) == "gyro") {
         m_gyroPos++;
         m_gyroPos %= storageDepth();
-        emit gyroDataChanged();
+        emit gyroDataChanged(m_gyroData);
     } else if (list.at(0) == "mag") {
         m_magnetoPos++;
         m_magnetoPos %= storageDepth();
-        emit magnetoDataChanged();
+        emit magnetoDataChanged(m_magnetoData);
     } else if (list.at(0) == "alti") {
         m_powerPos++;
         m_powerPos %= storageDepth();
-        emit powerDataChanged();
+        emit powerDataChanged(m_powerData);
     }
 
 
-}
-
-QPointF BackEnd::accelerationData(int sensor, int at) const
-{
-    return m_accelerationData[sensor][at];
 }
 
 int BackEnd::accelerationDataAxis() const
@@ -99,29 +75,14 @@ int BackEnd::accelerationDataAxis() const
     return 3;
 }
 
-QPointF BackEnd::gyroData(int sensor, int at) const
-{
-    return m_gyroData[sensor][at];
-}
-
 int BackEnd::gyroDataAxis() const
 {
     return 3;
 }
 
-QPointF BackEnd::magnetoData(int sensor, int at) const
-{
-    return m_magnetoData[sensor][at];
-}
-
 int BackEnd::magnetoDataAxis() const
 {
     return 3;
-}
-
-QPointF BackEnd::powerData(int sensor, int at) const
-{
-    return m_powerData[sensor][at];
 }
 
 int BackEnd::powerDataAxis() const
