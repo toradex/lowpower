@@ -4,6 +4,11 @@
 class RemoteBackend {
     PROP(QString serverAddress READONLY)
     PROP(bool remotingEnabled)
+    PROP(bool remoteControlEnabled)
+    PROP(SensorData accelerationData READONLY)
+    PROP(SensorData gyroData READONLY)
+    PROP(SensorData magnetoData READONLY)
+    PROP(SensorData powerData READONLY)
 
     SLOT(int accelerationDataAxis())
     SLOT(int gyroDataAxis())
@@ -11,13 +16,7 @@ class RemoteBackend {
     SLOT(int powerDataAxis())
 
     SLOT(int storageDepth())
-    SLOT(QString test())
 
     SLOT(void shutdown())
     SLOT(void sleep())
-
-    SIGNAL(accelerationDataChanged(SensorData sensorData))
-    SIGNAL(gyroDataChanged(SensorData sensorData))
-    SIGNAL(magnetoDataChanged(SensorData sensorData))
-    SIGNAL(powerDataChanged(SensorData sensorData))
 };

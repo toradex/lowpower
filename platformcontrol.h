@@ -10,7 +10,7 @@ public:
     explicit PlatformControl(QObject *parent = nullptr);
 
 signals:
-    void dataReceived(const QString &data);
+    void dataReceived(const QByteArray &data);
 
 public slots:
     virtual void shutdown() = 0;

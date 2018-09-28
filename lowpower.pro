@@ -1,4 +1,4 @@
-QT += charts qml quick remoteobjects gui-private network
+QT += charts qml quick remoteobjects gui-private network serialport
 CONFIG += c++11
 
 # The following define makes your compiler emit warnings if you use
@@ -18,7 +18,8 @@ SOURCES += \
     remoteeventhandler.cpp \
     platformcontrol.cpp \
     platformcontrolmock.cpp \
-    sensordata.cpp
+    sensordata.cpp \
+    platformcontrolrpmsg.cpp
 
 RESOURCES += qml.qrc
 
@@ -27,7 +28,8 @@ HEADERS += \
     remoteeventhandler.h \
     platformcontrol.h \
     platformcontrolmock.h \
-    sensordata.h
+    sensordata.h \
+    platformcontrolrpmsg.h
 
 DISTFILES += \
     remoteeventhandler.rep \

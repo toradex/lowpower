@@ -19,31 +19,32 @@ Item {
 
     id: sidepanel
     width: 100
-    height: 400
+    height: 350
 
     Item {
         id: poweritems
         x: 0
         y: 180
         width: 100
-        height: 220
+        height: 200
         anchors.bottom: parent.bottom
         anchors.bottomMargin: 0
 
         Button {
             id: sleep
             x: 0
-            y: 6
+            y: 0
             width: 100
             height: 100
             text: qsTr("Button")
             display: AbstractButton.IconOnly
             Image {
+                id: image
                 opacity: 1
                 anchors.rightMargin: 2
-                anchors.leftMargin: 2
-                anchors.bottomMargin: 2
-                anchors.topMargin: 2
+                anchors.leftMargin: 0
+                anchors.bottomMargin: 3
+                anchors.topMargin: 1
                 anchors.fill: parent
                 source: "images/sleep.png"
                 fillMode: Image.Tile
@@ -53,7 +54,7 @@ Item {
         Button {
             id: power
             x: 0
-            y: 120
+            y: sleep.y + sleep.height
             width: 100
             height: 100
             text: qsTr("Button")
@@ -62,8 +63,8 @@ Item {
                 opacity: 1
                 anchors.rightMargin: 2
                 anchors.leftMargin: 2
-                anchors.bottomMargin: 2
-                anchors.topMargin: 2
+                anchors.bottomMargin: 1
+                anchors.topMargin: 3
                 anchors.fill: parent
 
                 source: "images/shutdown.png"
@@ -76,7 +77,7 @@ Item {
         x: 0
         y: 0
         width: 100
-        height: 180
+        height: 120
 
         Text {
             id: designator_y

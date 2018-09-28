@@ -7,6 +7,8 @@
 #include <QPointer>
 #include <QProcess>
 #include <QRemoteObjectHost>
+#include <QtCharts/QAbstractSeries>
+#include <QtCharts/QXYSeries>
 
 #include "rep_remotebackend_source.h"
 #include "platformcontrol.h"
@@ -14,52 +16,16 @@
 
 class ReadOnlyRemoteBackend;
 
-class BackEndInterface : public QObject
-{
-    Q_OBJECT
-
-    Q_PROPERTY(QString serverAddress READ serverAddress NOTIFY serverAddressChanged)
-    Q_PROPERTY(bool remotingEnabled READ remotingEnabled WRITE setRemotingEnabled NOTIFY remotingEnabledChanged)
-
-public:
-    BackEndInterface(QObject *parent = nullptr) : QObject(parent) {}
-    ~BackEndInterface(){}
-
-    virtual Q_INVOKABLE int accelerationDataAxis() const {return 0;}
-    virtual Q_INVOKABLE int gyroDataAxis() const {return 0;}
-    virtual Q_INVOKABLE int magnetoDataAxis() const {return 0;}
-    virtual Q_INVOKABLE int powerDataAxis() const {return 0;}
-
-    virtual Q_INVOKABLE int storageDepth() const {return 0;}
-
-public Q_SLOTS:
-    // Remote stuff
-    virtual QString serverAddress() const {return "";}
-
-    virtual bool remotingEnabled() const {return false;}
-    virtual void setRemotingEnabled(bool enable) {(void)enable;}
-
-    virtual void shutdown() const {}
-    virtual void sleep() const {}
-    virtual QString test() const {return "";}
-
-Q_SIGNALS:
-    void accelerationDataChanged(const SensorData &sensorData);
-    void gyroDataChanged(const SensorData &sensorData);
-    void magnetoDataChanged(const SensorData &sensorData);
-    void powerDataChanged(const SensorData &sensorData);
-
-
-    // Remote stuff
-    void remotingEnabledChanged(bool remotingEnabled);
-    void serverAddressChanged();
-};
-
-class BackEnd : public BackEndInterface
+class BackEnd : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(QString serverAddress READ serverAddress NOTIFY serverAddressChanged)
     Q_PROPERTY(bool remotingEnabled READ remotingEnabled WRITE setRemotingEnabled NOTIFY remotingEnabledChanged)
+    Q_PROPERTY(bool remoteControlEnabled READ remoteControlEnabled WRITE setRemoteControlEnabled NOTIFY remoteControlEnabledChanged)
+    Q_PROPERTY(SensorData accelerationData READ accelerationData NOTIFY accelerationDataChanged)
+    Q_PROPERTY(SensorData gyroData READ gyroData NOTIFY gyroDataChanged)
+    Q_PROPERTY(SensorData magnetoData READ magnetoData NOTIFY magnetoDataChanged)
+    Q_PROPERTY(SensorData powerData READ powerData NOTIFY powerDataChanged)
 
 public:
     explicit BackEnd(PlatformControl *controller = nullptr, QObject *parent = nullptr);
@@ -73,8 +39,13 @@ public:
 
     Q_INVOKABLE int storageDepth() const;
 
+    SensorData accelerationData() const;
+    SensorData gyroData() const;
+    SensorData magnetoData() const;
+    SensorData powerData() const;
+
 public Q_SLOTS:
-    void processData(const QString &str);
+    void processData(const QByteArray &data);
 
     // Remote stuff
     QString serverAddress() const { return m_serverAddress; }
@@ -82,20 +53,26 @@ public Q_SLOTS:
     bool remotingEnabled() const;
     void setRemotingEnabled(bool enable);
 
+    bool remoteControlEnabled() const { return m_remoteControl; }
+    void setRemoteControlEnabled(bool enable) {
+        m_remoteControl = enable;
+        emit remoteControlEnabledChanged(enable);
+    }
+
     void shutdown() const;
     void sleep() const;
     QString test() const;
 
 Q_SIGNALS:
-    void accelerationDataChanged(const SensorData &sensorData);
-    void gyroDataChanged(const SensorData &sensorData);
-    void magnetoDataChanged(const SensorData &sensorData);
-    void powerDataChanged(const SensorData &sensorData);
-
-
     // Remote stuff
     void remotingEnabledChanged(bool remotingEnabled);
     void serverAddressChanged();
+    void remoteControlEnabledChanged(bool remoteControlEnabled);
+
+    void accelerationDataChanged(SensorData sensorData);
+    void gyroDataChanged(SensorData sensorData);
+    void magnetoDataChanged(SensorData sensorData);
+    void powerDataChanged(SensorData sensorData);
 
 
 private:
@@ -106,11 +83,6 @@ private:
 
     PlatformControl &m_controller;
 
-    int m_accelerationPos;
-    int m_gyroPos;
-    int m_magnetoPos;
-    int m_powerPos;
-
     // Remote stuff
     void updateServerAddress();
 
@@ -119,6 +91,7 @@ private:
     QPointer<QProcess> m_remoteAccess;
     QScopedPointer<QRemoteObjectHost> m_backendServer;
     QScopedPointer<ReadOnlyRemoteBackend> m_remoteBackend;
+    bool m_remoteControl;
 };
 
 class ReadOnlyRemoteBackend : public RemoteBackendSource
@@ -131,14 +104,22 @@ public:
     bool remotingEnabled() const { return m_backend->remotingEnabled(); }
     void setRemotingEnabled(bool) { }
 
+    bool remoteControlEnabled() const { return m_backend->remoteControlEnabled(); }
+    void setRemoteControlEnabled(bool) { }
+
     int accelerationDataAxis() { return m_backend->accelerationDataAxis(); }
     int gyroDataAxis() { return m_backend->gyroDataAxis(); }
     int magnetoDataAxis() { return m_backend->magnetoDataAxis(); }
     int powerDataAxis() { return m_backend->powerDataAxis(); }
     int storageDepth() { return m_backend->storageDepth(); }
+
+    SensorData accelerationData() const { return m_backend->accelerationData(); }
+    SensorData gyroData() const { return m_backend->gyroData(); }
+    SensorData magnetoData() const { return m_backend->magnetoData(); }
+    SensorData powerData() const {return m_backend->powerData(); }
+
     void shutdown(){ m_backend->shutdown(); }
     void sleep() { m_backend->sleep(); }
-    QString test() { return m_backend->test(); }
 
 private:
     const BackEnd *m_backend;

@@ -1,5 +1,6 @@
 #include <QDebug>
 #include <QRandomGenerator>
+#include <QtMath>
 
 #include "platformcontrolmock.h"
 
@@ -22,24 +23,69 @@ void PlatformControlMock::sleep()
 
 void PlatformControlMock::generateData()
 {
+#define GYRO_DIVIDER 16
+#define ACC_DIVIDER (8192.0/9.81)
+#define MAG_DIVIDER 10
+#define POWER_DIVIDER 8
+#define CURRENT_DIVIDER 10000
     QRandomGenerator *generator = QRandomGenerator::global();
     static int i;
-    QString str1 = QString::number(generator->generateDouble()*8-4);
-    QString str2 = QString::number(generator->generateDouble()*8-4);
-    QString str3 = QString::number(generator->generateDouble()*8-4);
-    emit dataReceived("acc," + str1 + "," + str2 + "," + str3);
+    QByteArray data;
+    qreal number;
 
-    str1 = QString::number(generator->generateDouble()*8-4);
-    str2 = QString::number(generator->generateDouble()*8-4);
-    str3 = QString::number(generator->generateDouble()*8-4);
-    emit dataReceived("gyro," + str1 + "," + str2 + "," + str3);
+    data.append(0xFF);
 
-    str1 = QString::number(generator->generateDouble()*8-4);
-    str2 = QString::number(generator->generateDouble()*8-4);
-    str3 = QString::number(generator->generateDouble()*8-4);
-    emit dataReceived("mag," + str1 + "," + str2 + "," + str3);
+    number = (generator->generateDouble()*8-4)*GYRO_DIVIDER;
+    number = (number < 0) ? number + 0x10000 : number;
+    data.append((qRound(number) >> 0) & 0xFF);
+    data.append((qRound(number) >> 8) & 0xFF);
+    number = (generator->generateDouble()*8-4)*GYRO_DIVIDER;
+    number = (number < 0) ? number + 0x10000:number;
+    data.append((qRound(number) >> 0) & 0xFF);
+    data.append((qRound(number) >> 8) & 0xFF);
+    number = (generator->generateDouble()*8-4)*GYRO_DIVIDER;
+    number = (number < 0) ? number + 0x10000:number;
+    data.append((qRound(number) >> 0) & 0xFF);
+    data.append((qRound(number) >> 8) & 0xFF);
 
-    str1 = QString::number(generator->generateDouble()*600.0);
-    emit dataReceived("alti," + str1);
-    i++;
+
+    number = (generator->generateDouble()*8-4)*ACC_DIVIDER;
+    number = (number < 0) ? number + 0x10000:number;
+    data.append((qRound(number) >> 0) & 0xFF);
+    data.append((qRound(number) >> 8) & 0xFF);
+    number = (generator->generateDouble()*8-4)*ACC_DIVIDER;
+    number = (number < 0) ? number + 0x10000:number;
+    data.append((qRound(number) >> 0) & 0xFF);
+    data.append((qRound(number) >> 8) & 0xFF);
+    number = (generator->generateDouble()*8-4)*ACC_DIVIDER;
+    number = (number < 0) ? number + 0x10000:number;
+    data.append((qRound(number) >> 0) & 0xFF);
+    data.append((qRound(number) >> 8) & 0xFF);
+
+
+    number = (generator->generateDouble()*8-4)*MAG_DIVIDER;
+    number = (number < 0) ? number + 0x10000:number;
+    data.append((qRound(number) >> 0) & 0xFF);
+    data.append((qRound(number) >> 8) & 0xFF);
+    number = (generator->generateDouble()*8-4)*MAG_DIVIDER;
+    number = (number < 0) ? number + 0x10000:number;
+    data.append((qRound(number) >> 0) & 0xFF);
+    data.append((qRound(number) >> 8) & 0xFF);
+    number = (generator->generateDouble()*8-4)*MAG_DIVIDER;
+    number = (number < 0) ? number + 0x10000:number;
+    data.append((qRound(number) >> 0) & 0xFF);
+    data.append((qRound(number) >> 8) & 0xFF);
+
+    /* Charge stat */
+    data.append(0.0);
+
+    number = (generator->generateDouble()*600)*POWER_DIVIDER;
+    data.append((qRound(number) >> 0) & 0xFF);
+    data.append((qRound(number) >> 8) & 0xFF);
+
+    number = (generator->generateDouble()*8)*CURRENT_DIVIDER;
+    data.append((qRound(number) >> 0) & 0xFF);
+    data.append((qRound(number) >> 8) & 0xFF);
+
+    emit dataReceived(data);
 }

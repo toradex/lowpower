@@ -3,9 +3,12 @@ import QtCharts 2.2
 
 Item {
     property variant designator: ["X °/s", "Y °/s", "Z °/s"]
+
     property alias xAxis: xAxis
     property alias yAxis: yAxis
     property alias zAxis: zAxis
+
+    property int depth: 101
 
     ChartView {
 
@@ -19,15 +22,15 @@ Item {
         ValueAxis {
             id: axisX
             min: 0
-            max: 10
+            max: depth
             tickCount: 0
             gridVisible: false
         }
 
         ValueAxis {
             id: axisY
-            min: -4.0
-            max: 4.0
+            min: -180.0
+            max: 180.0
         }
 
         LineSeries {

@@ -4,7 +4,7 @@ SensorData::SensorData(int axis, int points): m_axis(axis), m_points(points), m_
 {
     for (int i = 0; i < axis; i++) {
         for (int j = 0; j < points; j++) {
-            m_data[i].append(QPointF(i, 0));
+            m_data[i].append(0.0);
         }
     }
 }

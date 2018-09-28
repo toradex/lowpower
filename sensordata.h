@@ -22,7 +22,12 @@ public:
     SensorData(const SensorData &other);
     ~SensorData();
 
-    void push_front(int axis, QPointF point) {
+    void push_pop(int axis, qreal point) {
+        m_data[axis].pop_back();
+        m_data[axis].push_front(point);
+    }
+
+    void push_front(int axis, qreal point) {
         m_data[axis].push_front(point);
     }
 
@@ -31,7 +36,7 @@ public:
     }
 
     // At is used from QML to get the different points
-    Q_INVOKABLE QPointF at(int axis, int point) {
+    Q_INVOKABLE qreal at(int axis, int point) {
         return m_data[axis][point];
     }
 
@@ -54,18 +59,20 @@ public:
         data.m_data.clear();
 
         for (int i = 0; i < data.m_axis; i++) {
-            QVector<QPointF> points;
+            QVector<qreal> points;
             stream >> points;
             data.m_data.append(points);
         }
 
         return stream;
     }
+
+    inline bool operator!=(const SensorData& cmp){ return !(&this->m_data == &cmp.m_data); }
 private:
     int m_axis;
     int m_points;
 
-    QVector<QVector<QPointF>> m_data;
+    QVector<QVector<qreal>> m_data;
 };
 
 Q_DECLARE_METATYPE(SensorData)

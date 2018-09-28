@@ -8,6 +8,7 @@
 #include "rep_remotebackend_replica.h"
 #include "remoteeventhandler.h"
 #include "platformcontrolmock.h"
+#include "platformcontrolrpmsg.h"
 #include "sensordata.h"
 
 int main(int argc, char *argv[])
@@ -48,7 +49,10 @@ int main(int argc, char *argv[])
 
         backend.reset(replica);
     } else {
-        PlatformControl *controller = new PlatformControlMock(&app);
+        /* Switch mock/real implementation */
+//        PlatformControlRpmsg *controller = new PlatformControlRpmsg(&app);
+//        controller->initialize();
+        PlatformControlMock *controller = new PlatformControlMock(&app);
         backend.reset(new BackEnd(controller));
     }
 

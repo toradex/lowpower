@@ -3,71 +3,71 @@
 #include <QNetworkInterface>
 #include <QCoreApplication>
 
+#include <cmath>
+
 #include "backend.h"
 
-#define STORAGE_DEPTH 11
+#define STORAGE_DEPTH 101
 
-BackEnd::BackEnd(PlatformControl *controller, QObject *parent) : BackEndInterface(parent),
+BackEnd::BackEnd(PlatformControl *controller, QObject *parent) : QObject(parent),
     m_accelerationData(3, STORAGE_DEPTH), m_gyroData(3, STORAGE_DEPTH), m_magnetoData(3, STORAGE_DEPTH), m_powerData(1, STORAGE_DEPTH),
     m_controller(*controller)
 {
-    connect(&m_controller, SIGNAL(dataReceived(const QString &)), this, SLOT(processData(const QString &)));
+    connect(&m_controller, SIGNAL(dataReceived(const QByteArray &)), this, SLOT(processData(const QByteArray &)));
 }
 
-void BackEnd::processData(const QString &str)
+static qreal convertData(char byte1, char byte2, qreal divider)
 {
+    quint16 value;
+    qint16 svalue;
+    value = static_cast<quint16>((static_cast<quint16>(byte1) << 0) + (static_cast<quint16>(byte2) << 8));
+    svalue = static_cast<qint16>(value);
+    return static_cast<qreal>(svalue)/divider;
+}
 
-    /* Response from M4 will be a string of form "acc?x?y?z" */
-    QStringList list = str.split(',');
+void BackEnd::processData(const QByteArray &data)
+{
+#define GYRO_DIVIDER 16
+#define ACC_DIVIDER (8192.0/9.81)
+#define MAG_DIVIDER 10
+#define POWER_DIVIDER 8
+#define CURRENT_DIVIDER 10000
 
-    if (list.size() > 4) {
-        qWarning() << "List is > 4, this is not handled at the moment";
+    if (data.size() != 24) {
+        qWarning() << "process data must be exactly 24 bytes but is " << data.size();
+    }
+
+    if (0xFF != static_cast<quint8>(data[0])) {
+        qWarning() << "process data must start with 0xFF";
         return;
     }
 
-    for (int i = 0; i < list.size()-1; i ++) {
-        bool ok;
-        qreal val = list.at(i + 1).toDouble(&ok);
-        if (ok == false) {
-            qWarning() << "Invalid value " << val;
-            return;
-        }
+    /* Do some uggly conversion as done int the original, should maybe fixed later */
+    m_gyroData.push_pop(0, std::fmod(convertData(data[1], data[2], GYRO_DIVIDER), 180));
+    m_gyroData.push_pop(1, std::fmod(convertData(data[3], data[4], GYRO_DIVIDER), 180));
+    m_gyroData.push_pop(2, std::fmod(convertData(data[5], data[6], GYRO_DIVIDER), 180));
 
-        if (list.at(0) == "acc") {
-            m_accelerationData.push_front(i, QPointF(m_accelerationPos, val));
-            m_accelerationData.pop_back(i);
+    m_accelerationData.push_pop(0, convertData(data[7], data[8], ACC_DIVIDER));
+    m_accelerationData.push_pop(1, convertData(data[9], data[10], ACC_DIVIDER));
+    m_accelerationData.push_pop(2, convertData(data[11], data[12], ACC_DIVIDER));
 
-        } else if (list.at(0) == "gyro") {
-            m_gyroData.push_front(i, QPointF(m_gyroPos, val));
-            m_gyroData.pop_back(i);
-        } else if (list.at(0) == "mag") {
-            m_magnetoData.push_front(i, QPointF(m_magnetoPos, val));
-            m_magnetoData.pop_back(i);
-        } else if (list.at(0) == "alti") {
-            m_powerData.push_front(i, QPointF(m_powerPos, val));
-            m_powerData.pop_back(i);
-        }
-   }
+    m_magnetoData.push_pop(0, convertData(data[13], data[14], MAG_DIVIDER));
+    m_magnetoData.push_pop(1, convertData(data[15], data[16], MAG_DIVIDER));
+    m_magnetoData.push_pop(2, convertData(data[17], data[18], MAG_DIVIDER));
 
-    if (list.at(0) == "acc") {
-        m_accelerationPos++;
-        m_accelerationPos %= storageDepth();
-        emit accelerationDataChanged(m_accelerationData);
-    } else if (list.at(0) == "gyro") {
-        m_gyroPos++;
-        m_gyroPos %= storageDepth();
-        emit gyroDataChanged(m_gyroData);
-    } else if (list.at(0) == "mag") {
-        m_magnetoPos++;
-        m_magnetoPos %= storageDepth();
-        emit magnetoDataChanged(m_magnetoData);
-    } else if (list.at(0) == "alti") {
-        m_powerPos++;
-        m_powerPos %= storageDepth();
-        emit powerDataChanged(m_powerData);
-    }
+    qreal fvalue;
+    quint16 value;
+    value = static_cast<quint16>((static_cast<quint16>(data[20]) << 0) + (static_cast<quint16>(data[21]) << 8));
+    fvalue = value/POWER_DIVIDER;
+    m_powerData.push_pop(0, fvalue);
 
+    /* Current would be 22 23, we ignore that DIVIDER would be 10000 */
 
+    /* This is dirty */
+    emit accelerationDataChanged(m_accelerationData);
+    emit gyroDataChanged(m_gyroData);
+    emit magnetoDataChanged(m_magnetoData);
+    emit powerDataChanged(m_powerData);
 }
 
 int BackEnd::accelerationDataAxis() const
@@ -92,7 +92,7 @@ int BackEnd::powerDataAxis() const
 
 int BackEnd::storageDepth() const
 {
-    return 11;
+    return STORAGE_DEPTH;
 }
 
 bool BackEnd::remotingEnabled() const
@@ -154,6 +154,26 @@ QString BackEnd::test() const
     return "Test";
 }
 
+SensorData BackEnd::powerData() const
+{
+    return m_powerData;
+}
+
+SensorData BackEnd::magnetoData() const
+{
+    return m_magnetoData;
+}
+
+SensorData BackEnd::gyroData() const
+{
+    return m_gyroData;
+}
+
+SensorData BackEnd::accelerationData() const
+{
+    return m_accelerationData;
+}
+
 void BackEnd::updateServerAddress()
 {
     QMap<int, QString> addresses;
@@ -188,4 +208,6 @@ ReadOnlyRemoteBackend::ReadOnlyRemoteBackend(const BackEnd *backend, QObject *pa
     connect(m_backend, &BackEnd::gyroDataChanged, this, &ReadOnlyRemoteBackend::gyroDataChanged);
     connect(m_backend, &BackEnd::magnetoDataChanged, this, &ReadOnlyRemoteBackend::magnetoDataChanged);
     connect(m_backend, &BackEnd::powerDataChanged, this, &ReadOnlyRemoteBackend::powerDataChanged);
+    connect(m_backend, &BackEnd::remoteControlEnabledChanged, this, &ReadOnlyRemoteBackend::remoteControlEnabledChanged);
+    connect(m_backend, &BackEnd::remotingEnabledChanged, this, &ReadOnlyRemoteBackend::remotingEnabledChanged);
 }

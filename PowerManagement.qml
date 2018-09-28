@@ -3,7 +3,10 @@ import QtCharts 2.2
 
 Item {
     property variant designator: ["mW", "", ""]
+
     property alias xAxis: xAxis
+
+    property int depth: 10
 
     ChartView {
         anchors.fill: parent
@@ -16,7 +19,7 @@ Item {
         ValueAxis {
             id: axisX
             min: 0
-            max: 10
+            max: depth
             tickCount: 0
             gridVisible: false
         }

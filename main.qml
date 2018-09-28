@@ -8,160 +8,194 @@ import com.toradex.examples.backend 1.0
 //import com.toradex.examples.sensordata 1.0
 
 ApplicationWindow {
-    id: root
+    id: window
     visible: true
-    width: 640
-    height: 480
     title: qsTr("Tabs")
+    overlay.parent: root
 
-    property int storageDepth: 0
+    property int storageDepth: 11
     property int eventCount: 0
-
-    function mapFromWindow(x, y) {
-        return Qt.point(x,y);
-    }
-
-    function mapToWindow(x, y) {
-        return Qt.point(x,y);
-    }
+    property bool accInitialized: false;
+    property bool magInitialized: false;
+    property bool gyroInitialized: false;
+    property bool powerInitialized: false;
 
     function updateAxis(axis, sensorData, idx) {
         axis.clear();
-        for (var i = 0; i < sensorData.points; i++) {
-            var val = sensorData.at(idx, i);
-            axis.append(sensorData.points - i - 1, val.y);
+
+        storageDepth = sensorData.points - 1;
+        for (var i = 0; i < sensorData.points - 1; i++) {
+            var val = sensorData.at(idx, sensorData.points - i - 1);
+            axis.append(i, val);
         }
     }
 
-    Connections {
-        // Needs to be done this way because we need to address backend
-        // created in Cpp
-        target: backend
-        onAccelerationDataChanged: {
-            updateAxis(accelerometer.xAxis, sensorData, 0);
-            updateAxis(accelerometer.yAxis, sensorData, 1);
-            updateAxis(accelerometer.zAxis, sensorData, 2);
-        }
-
-        onGyroDataChanged: {
-            updateAxis(gyroscope.xAxis, sensorData, 0);
-            updateAxis(gyroscope.yAxis, sensorData, 1);
-            updateAxis(gyroscope.zAxis, sensorData, 2);
-        }
-
-        onMagnetoDataChanged: {
-            updateAxis(magnetometer.xAxis, sensorData, 0);
-            updateAxis(magnetometer.yAxis, sensorData, 1);
-            updateAxis(magnetometer.zAxis, sensorData, 2);
-        }
-
-        onPowerDataChanged: {
-            updateAxis(power.xAxis, sensorData, 0);
-        }
-    }
-
-    header: ColumnLayout {
-        width: parent.width
-        Image {
-            source: "images/toradexlogo.png"
-            Layout.alignment: Qt.AlignHCenter
-        }
-
-        TabBar {
-            id: tabBar
-            currentIndex: swipeView.currentIndex
-            Layout.fillWidth: true
-
-            TabButton {
-                text: qsTr("Accelerometer")
-            }
-            TabButton {
-                text: qsTr("Gyroscope")
-            }
-            TabButton {
-                text: qsTr("Magnetometer")
-            }
-            TabButton {
-                text: qsTr("Power Management")
-            }
-
-            TabButton {
-                text: qsTr("Settings")
-            }
-        }
-    }
-
-    RowLayout {
-        width: parent.width
-        height: parent.height
+    Rectangle {
+        id: root
+        color: window.color
+        width: 800
+        height: 480
         anchors.centerIn: parent
-        anchors.fill: parent
+        clip: true
+
+        function mapFromWindow(x, y) {
+            return window.contentItem.mapToItem(root, x, y);
+        }
+
+        function mapToWindow(x, y) {
+            return window.contentItem.mapFromItem(root, x, y);
+        }
+
+        Timer {
+            id: refreshTimer
+            interval: 500
+            running: true
+            repeat: true
+            onTriggered: {
+                switch (swipeView.currentIndex) {
+                case 0:
+                    var accData = backend.accelerationData;
+                    updateAxis(accelerometer.xAxis, accData, 0);
+                    updateAxis(accelerometer.yAxis, accData, 1);
+                    updateAxis(accelerometer.zAxis, accData, 2);
+                    break;
+                case 1:
+                    updateAxis(gyroscope.xAxis, backend.gyroData, 0);
+                    updateAxis(gyroscope.yAxis, backend.gyroData, 1);
+                    updateAxis(gyroscope.zAxis, backend.gyroData, 2);
+                    break;
+                case 2:
+                    updateAxis(magnetometer.xAxis, backend.magnetoData, 0);
+                    updateAxis(magnetometer.yAxis, backend.magnetoData, 1);
+                    updateAxis(magnetometer.zAxis, backend.magnetoData, 2);
+                    break;
+                case 3:
+                    updateAxis(power.xAxis, backend.powerData, 0);
+                    break;
+
+                }
+            }
+        }
+        RemoteMouseIndicator {
+            id: remoteMouse
+            x: -1000
+            visible: x !== -1000
+            z: 99999999999
+
+
+            Connections {
+                target: backend
+                onRemotingEnabledChanged: if (!remotingEnabled) remoteMouse.x = -1000
+            }
+
+            Connections {
+                target: remoteEventHandler
+                onRemoteMouseXChanged: if (backend.remoteControlEnabled) remoteMouse.setX(x)
+                onRemoteMouseYChanged: if (backend.remoteControlEnabled) remoteMouse.setY(y)
+                onRemoteMouseClicked: if (backend.remoteControlEnabled) remoteMouse.showClick()
+            }
+        }
 
         ColumnLayout {
-            id: test
-            Item {
-                Layout.fillHeight: true
-            }
-            SidePanel {
-                id: sidepanel
-                Layout.fillWidth: true
-                Layout.maximumWidth: 100
-                Layout.fillHeight: true
+            id: columnLayout
+            anchors.fill: parent
 
-                designator: swipeView.currentItem.designator
-
-                sleep.onClicked: backend.sleep();
-                power.onClicked: backend.shutdown()
-            }
-        }
-
-        Item {
-            Layout.fillHeight: true
-            Layout.fillWidth: true
-            SwipeView {
-                id: swipeView
-                currentIndex: tabBar.currentIndex
-                height: parent.height
+            ColumnLayout {
+                id: header
                 width: parent.width
-                clip: true
+                Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+                Image {
+                    source: "images/toradexlogo.png"
+                    Layout.alignment: Qt.AlignHCenter
+                }
 
-                Accelerometer {
-                    id: accelerometer
+                TabBar {
+                    id: tabBar
+                    currentIndex: swipeView.currentIndex
+                    Layout.fillWidth: true
+
+                    TabButton {
+                        text: qsTr("Accelerometer")
+                    }
+                    TabButton {
+                        text: qsTr("Gyroscope")
+                    }
+                    TabButton {
+                        text: qsTr("Magnetometer")
+                    }
+                    TabButton {
+                        text: qsTr("Power Management")
+                    }
+
+                    TabButton {
+                        text: qsTr("Settings")
+                    }
                 }
-                Gyroscope {
-                    id: gyroscope
+            }
+
+            RowLayout {
+                Layout.fillHeight: true
+                Layout.alignment: Qt.AlignLeft | Qt.AlignBottom
+                Layout.fillWidth: true
+                ColumnLayout {
+                    id: test
+                    Item {
+                        Layout.fillHeight: true
+                    }
+                    SidePanel {
+                        id: sidepanel
+                        Layout.fillWidth: true
+                        Layout.maximumWidth: 100
+                        Layout.fillHeight: true
+
+                        designator: swipeView.currentItem.designator
+
+                        sleep.onClicked: backend.sleep();
+                        power.onClicked: backend.shutdown()
+                    }
                 }
-                Magnetometer {
-                    id: magnetometer
-                }
-                PowerManagement {
-                    id: power
-                }
-                Settings {
-                    id: settings
+
+                Item {
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    SwipeView {
+                        id: swipeView
+                        currentIndex: tabBar.currentIndex
+                        height: parent.height
+                        width: parent.width
+                        clip: true
+
+                        Accelerometer {
+                            id: accelerometer
+                            depth: storageDepth - 1
+                        }
+                        Gyroscope {
+                            id: gyroscope
+                            depth: storageDepth - 1
+                        }
+                        Magnetometer {
+                            id: magnetometer
+                            depth: storageDepth - 1
+                        }
+                        PowerManagement {
+                            id: power
+                            depth: storageDepth - 1
+                        }
+                        Settings {
+                            id: settings
+                        }
+
+                        onCurrentIndexChanged: console.log("Active index " + currentIndex);
+                    }
                 }
             }
         }
-    }
 
-    RemoteMouseIndicator {
-        id: remoteMouse
-        x: -1000
-        visible: x !== -1000
-        z: 99999999999
-
-
-        Connections {
-            target: backend
-            onRemotingEnabledChanged: if (!remotingEnabled) remoteMouse.x = -1000
-        }
-
-        Connections {
-            target: remoteEventHandler
-            onRemoteMouseXChanged: remoteMouse.setX(x)
-            onRemoteMouseYChanged: remoteMouse.setY(y)
-            onRemoteMouseClicked: remoteMouse.showClick()
-        }
     }
 }
 
+
+/*##^## Designer {
+    D{i:0;autoSize:true;height:480;width:640}D{i:27;anchors_height:100;anchors_width:100}
+}
+ ##^##*/
