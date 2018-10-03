@@ -1,5 +1,5 @@
 #include <QDebug>
-#include <QtCharts/QXYSeries>
+#include <QtCharts/QLineSeries>
 #include <QNetworkInterface>
 #include <QCoreApplication>
 
@@ -93,6 +93,58 @@ int BackEnd::powerDataAxis() const
 int BackEnd::storageDepth() const
 {
     return STORAGE_DEPTH;
+}
+
+void BackEnd::updateAcceleration(int axis, QAbstractSeries *series) const
+{
+    QVector<QPointF> points;
+    if (series) {
+        QLineSeries *xySeries = static_cast<QLineSeries *>(series);
+        for (int i = 0; i < m_accelerationData.points(); i++) {
+            points.append(QPointF(i, m_accelerationData.at(axis, m_accelerationData.points() - 1 - i)));
+        }
+        // Use replace instead of clear + append, it's optimized for performance
+        xySeries->replace(points);
+    }
+}
+
+void BackEnd::updateGyro(int axis, QAbstractSeries *series) const
+{
+    QVector<QPointF> points;
+    if (series) {
+        QLineSeries *xySeries = static_cast<QLineSeries *>(series);
+        for (int i = 0; i < m_accelerationData.points(); i++) {
+            points.append(QPointF(i, m_gyroData.at(axis, m_accelerationData.points() - 1 - i)));
+        }
+        // Use replace instead of clear + append, it's optimized for performance
+        xySeries->replace(points);
+    }
+}
+
+void BackEnd::updateMagneto(int axis, QAbstractSeries *series) const
+{
+    QVector<QPointF> points;
+    if (series) {
+        QLineSeries *xySeries = static_cast<QLineSeries *>(series);
+        for (int i = 0; i < m_accelerationData.points(); i++) {
+            points.append(QPointF(i, m_magnetoData.at(axis, m_accelerationData.points() - 1)));
+        }
+        // Use replace instead of clear + append, it's optimized for performance
+        xySeries->replace(points);
+    }
+}
+
+void BackEnd::updatePower(int axis, QAbstractSeries *series) const
+{
+    QVector<QPointF> points;
+    if (series) {
+        QLineSeries *xySeries = static_cast<QLineSeries *>(series);
+        for (int i = 0; i < m_accelerationData.points(); i++) {
+            points.append(QPointF(i, m_powerData.at(axis, m_accelerationData.points() - 1)));
+        }
+        // Use replace instead of clear + append, it's optimized for performance
+        xySeries->replace(points);
+    }
 }
 
 bool BackEnd::remotingEnabled() const

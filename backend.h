@@ -7,14 +7,16 @@
 #include <QPointer>
 #include <QProcess>
 #include <QRemoteObjectHost>
-#include <QtCharts/QAbstractSeries>
-#include <QtCharts/QXYSeries>
+#include <QAbstractSeries>
+
 
 #include "rep_remotebackend_source.h"
 #include "platformcontrol.h"
 #include "sensordata.h"
 
 class ReadOnlyRemoteBackend;
+
+QT_CHARTS_USE_NAMESPACE
 
 class BackEnd : public QObject
 {
@@ -38,6 +40,11 @@ public:
     Q_INVOKABLE int powerDataAxis() const;
 
     Q_INVOKABLE int storageDepth() const;
+
+    Q_INVOKABLE void updateAcceleration(int axis, QAbstractSeries *series) const;
+    Q_INVOKABLE void updateGyro(int axis, QAbstractSeries *series) const;
+    Q_INVOKABLE void updateMagneto(int axis, QAbstractSeries *series) const;
+    Q_INVOKABLE void updatePower(int axis, QAbstractSeries *series) const;
 
     SensorData accelerationData() const;
     SensorData gyroData() const;

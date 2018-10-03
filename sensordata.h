@@ -15,7 +15,7 @@ class SensorData
 
     // Properties that are accessible from QML
     Q_PROPERTY(int axis MEMBER m_axis)
-    Q_PROPERTY(int points MEMBER m_points)
+    Q_PROPERTY(int points READ points)
 
 public:
     explicit SensorData(int axis = 0, int points = 0);
@@ -36,7 +36,7 @@ public:
     }
 
     // At is used from QML to get the different points
-    Q_INVOKABLE qreal at(int axis, int point) {
+    Q_INVOKABLE qreal at(int axis, int point) const {
         return m_data[axis][point];
     }
 
@@ -68,6 +68,8 @@ public:
     }
 
     inline bool operator!=(const SensorData& cmp){ return !(&this->m_data == &cmp.m_data); }
+    int points() const;
+
 private:
     int m_axis;
     int m_points;

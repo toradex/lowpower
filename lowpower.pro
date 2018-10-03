@@ -19,7 +19,8 @@ SOURCES += \
     platformcontrol.cpp \
     platformcontrolmock.cpp \
     sensordata.cpp \
-    platformcontrolrpmsg.cpp
+    platformcontrolrpmsg.cpp \
+    processsettings.cpp
 
 RESOURCES += qml.qrc
 
@@ -29,7 +30,8 @@ HEADERS += \
     platformcontrol.h \
     platformcontrolmock.h \
     sensordata.h \
-    platformcontrolrpmsg.h
+    platformcontrolrpmsg.h \
+    processsettings.h
 
 DISTFILES += \
     remoteeventhandler.rep \

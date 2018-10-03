@@ -9,11 +9,11 @@ Item {
     property alias zAxis: zAxis
 
     property int depth: 101
+    property bool openGL: false
 
     ChartView {
 
         anchors.fill: parent
-        antialiasing: true
         backgroundColor: "transparent"
         theme: ChartView.ChartThemeDark
 
@@ -37,18 +37,21 @@ Item {
             id: xAxis
             axisX: axisX
             axisY: axisY
+            useOpenGL: openGL
         }
 
         LineSeries {
             id: yAxis
             axisX: axisX
             axisY: axisY
+            useOpenGL: openGL
         }
 
         LineSeries {
             id: zAxis
             axisX: axisX
             axisY: axisY
+            useOpenGL: openGL
         }
     }
 }

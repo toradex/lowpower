@@ -7,6 +7,7 @@ Item {
     property alias xAxis: xAxis
 
     property int depth: 10
+    property bool openGL: false
 
     ChartView {
         anchors.fill: parent
@@ -34,6 +35,7 @@ Item {
             id: xAxis
             axisX: axisX
             axisY: axisY
+            useOpenGL: openGL
         }
     }
 }

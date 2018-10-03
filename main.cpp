@@ -10,6 +10,7 @@
 #include "platformcontrolmock.h"
 #include "platformcontrolrpmsg.h"
 #include "sensordata.h"
+#include "processsettings.h"
 
 int main(int argc, char *argv[])
 {
@@ -33,11 +34,14 @@ int main(int argc, char *argv[])
 
     QRemoteObjectNode *remoteClient;
     RemoteEventHandler remoteEventHandler;
+    ProcessSettings *processSettings;
 
     // qmlRegisterType<SensorData>("com.toradex.examples.sensordata", 1, 0, "SensorData");
     qmlRegisterType<BackEnd>("com.toradex.examples.backend", 1, 0, "RemoteBackEnd");
+    qmlRegisterType<ProcessSettings>("com.toradex.examples.processsettings", 1, 0, "ProcessSettings");
 
     if (app.platformName() == QLatin1String("webgl")) {
+        processSettings = new ProcessSettings(true, &app);
         RemoteBackendReplica *replica;
         remoteClient = new QRemoteObjectNode(&app);
         remoteClient->connectToNode(QUrl("local:backendServer"));
@@ -49,14 +53,18 @@ int main(int argc, char *argv[])
 
         backend.reset(replica);
     } else {
+        processSettings = new ProcessSettings(false, &app);
         /* Switch mock/real implementation */
-//        PlatformControlRpmsg *controller = new PlatformControlRpmsg(&app);
-//        controller->initialize();
-        PlatformControlMock *controller = new PlatformControlMock(&app);
+        // PlatformControlMock *controller = new PlatformControlMock(&app);
+
+        PlatformControlRpmsg *controller = new PlatformControlRpmsg(&app);
+        controller->initialize();
+
         backend.reset(new BackEnd(controller));
     }
 
     engine.rootContext()->setContextProperty("backend", backend.data());
+    engine.rootContext()->setContextProperty("processSettings", processSettings);
     engine.rootContext()->setContextProperty("remoteEventHandler", &remoteEventHandler);
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
 

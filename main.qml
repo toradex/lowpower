@@ -3,6 +3,7 @@ import QtQuick.Controls 2.3
 import QtQuick.VirtualKeyboard 2.2
 import QtQuick.Layouts 1.3
 import QtQml.RemoteObjects 1.0
+import QtCharts 2.2
 
 import com.toradex.examples.backend 1.0
 //import com.toradex.examples.sensordata 1.0
@@ -19,16 +20,20 @@ ApplicationWindow {
     property bool magInitialized: false;
     property bool gyroInitialized: false;
     property bool powerInitialized: false;
+    property int i;
+    property var val;
+
+    property bool openGLenabled: processSettings.webgl;
 
     function updateAxis(axis, sensorData, idx) {
-        axis.clear();
-
         storageDepth = sensorData.points - 1;
-        for (var i = 0; i < sensorData.points - 1; i++) {
-            var val = sensorData.at(idx, sensorData.points - i - 1);
+        axis.clear();
+        for (i = 0; i < sensorData.points - 1; i++) {
+            val = sensorData.at(idx, sensorData.points - i - 1);
             axis.append(i, val);
         }
     }
+
 
     Rectangle {
         id: root
@@ -36,7 +41,7 @@ ApplicationWindow {
         width: 800
         height: 480
         anchors.centerIn: parent
-        clip: true
+        // clip: true
 
         function mapFromWindow(x, y) {
             return window.contentItem.mapToItem(root, x, y);
@@ -54,10 +59,13 @@ ApplicationWindow {
             onTriggered: {
                 switch (swipeView.currentIndex) {
                 case 0:
-                    var accData = backend.accelerationData;
-                    updateAxis(accelerometer.xAxis, accData, 0);
-                    updateAxis(accelerometer.yAxis, accData, 1);
-                    updateAxis(accelerometer.zAxis, accData, 2);
+//                    storageDepth = backend.accelerationData.points - 1;
+//                    backend.updateAcceleration(0, accelerometer.xAxis);
+//                    backend.updateAcceleration(1, accelerometer.yAxis);
+//                    backend.updateAcceleration(2, accelerometer.zAxis);
+                    updateAxis(accelerometer.xAxis, backend.accelerationData, 0);
+                    updateAxis(accelerometer.yAxis, backend.accelerationData, 1);
+                    updateAxis(accelerometer.zAxis, backend.accelerationData, 2);
                     break;
                 case 1:
                     updateAxis(gyroscope.xAxis, backend.gyroData, 0);
@@ -76,25 +84,24 @@ ApplicationWindow {
                 }
             }
         }
-        RemoteMouseIndicator {
-            id: remoteMouse
-            x: -1000
-            visible: x !== -1000
-            z: 99999999999
+//        RemoteMouseIndicator {
+//            id: remoteMouse
+//            x: -1000
+//            visible: x !== -1000
+//            z: 99999999999
 
+//            Connections {
+//                target: backend
+//                onRemotingEnabledChanged: if (!remotingEnabled) remoteMouse.x = -1000
+//            }
 
-            Connections {
-                target: backend
-                onRemotingEnabledChanged: if (!remotingEnabled) remoteMouse.x = -1000
-            }
-
-            Connections {
-                target: remoteEventHandler
-                onRemoteMouseXChanged: if (backend.remoteControlEnabled) remoteMouse.setX(x)
-                onRemoteMouseYChanged: if (backend.remoteControlEnabled) remoteMouse.setY(y)
-                onRemoteMouseClicked: if (backend.remoteControlEnabled) remoteMouse.showClick()
-            }
-        }
+//            Connections {
+//                target: remoteEventHandler
+//                onRemoteMouseXChanged: if (backend.remoteControlEnabled) remoteMouse.setX(x)
+//                onRemoteMouseYChanged: if (backend.remoteControlEnabled) remoteMouse.setY(y)
+//                onRemoteMouseClicked: if (backend.remoteControlEnabled) remoteMouse.showClick()
+//            }
+//        }
 
         ColumnLayout {
             id: columnLayout
@@ -158,44 +165,48 @@ ApplicationWindow {
                 Item {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
-                    SwipeView {
-                        id: swipeView
-                        currentIndex: tabBar.currentIndex
-                        height: parent.height
-                        width: parent.width
-                        clip: true
+                    MouseArea {
+                        hoverEnabled: true
+                        anchors.fill: parent
+                        onEntered: {openGLenabled = false;}
+                        onExited: {openGLenabled = processSettings.webgl;}
+                        SwipeView {
+                            id: swipeView
+                            currentIndex: tabBar.currentIndex
+                            height: parent.height
+                            width: parent.width
+                            clip: true
 
-                        Accelerometer {
-                            id: accelerometer
-                            depth: storageDepth - 1
-                        }
-                        Gyroscope {
-                            id: gyroscope
-                            depth: storageDepth - 1
-                        }
-                        Magnetometer {
-                            id: magnetometer
-                            depth: storageDepth - 1
-                        }
-                        PowerManagement {
-                            id: power
-                            depth: storageDepth - 1
-                        }
-                        Settings {
-                            id: settings
-                        }
 
-                        onCurrentIndexChanged: console.log("Active index " + currentIndex);
+
+                            Accelerometer {
+                                id: accelerometer
+                                depth: storageDepth - 1
+                                openGL: openGLenabled
+                            }
+                            Gyroscope {
+                                id: gyroscope
+                                depth: storageDepth - 1
+                                openGL: openGLenabled
+                            }
+                            Magnetometer {
+                                id: magnetometer
+                                depth: storageDepth - 1
+                                openGL: openGLenabled
+                            }
+                            PowerManagement {
+                                id: power
+                                depth: storageDepth - 1
+                                openGL: openGLenabled
+                            }
+                            Settings {
+                                id: settings
+                            }
+                            onCurrentIndexChanged: console.log("Active index " + currentIndex);
+                        }
                     }
                 }
             }
         }
-
     }
 }
-
-
-/*##^## Designer {
-    D{i:0;autoSize:true;height:480;width:640}D{i:27;anchors_height:100;anchors_width:100}
-}
- ##^##*/

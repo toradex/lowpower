@@ -21,3 +21,8 @@ SensorData::~SensorData()
 {
 
 }
+
+int SensorData::points() const
+{
+    return m_points;
+}
