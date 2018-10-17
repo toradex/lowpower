@@ -23,7 +23,7 @@ void PlatformControlMock::sleep()
 
 void PlatformControlMock::generateData()
 {
-#define GYRO_DIVIDER 16
+#define GYRO_DIVIDER 8
 #define ACC_DIVIDER (8192.0/9.81)
 #define MAG_DIVIDER 10
 #define POWER_DIVIDER 8
@@ -49,29 +49,29 @@ void PlatformControlMock::generateData()
     data.append((qRound(number) >> 8) & 0xFF);
 
 
-    number = (generator->generateDouble()*8-4)*ACC_DIVIDER;
+    number = (generator->generateDouble()*80-40)*ACC_DIVIDER;
     number = (number < 0) ? number + 0x10000:number;
     data.append((qRound(number) >> 0) & 0xFF);
     data.append((qRound(number) >> 8) & 0xFF);
-    number = (generator->generateDouble()*8-4)*ACC_DIVIDER;
+    number = (generator->generateDouble()*80-40)*ACC_DIVIDER;
     number = (number < 0) ? number + 0x10000:number;
     data.append((qRound(number) >> 0) & 0xFF);
     data.append((qRound(number) >> 8) & 0xFF);
-    number = (generator->generateDouble()*8-4)*ACC_DIVIDER;
+    number = (generator->generateDouble()*80-40)*ACC_DIVIDER;
     number = (number < 0) ? number + 0x10000:number;
     data.append((qRound(number) >> 0) & 0xFF);
     data.append((qRound(number) >> 8) & 0xFF);
 
 
-    number = (generator->generateDouble()*8-4)*MAG_DIVIDER;
+    number = (generator->generateDouble()*100-50)*MAG_DIVIDER;
     number = (number < 0) ? number + 0x10000:number;
     data.append((qRound(number) >> 0) & 0xFF);
     data.append((qRound(number) >> 8) & 0xFF);
-    number = (generator->generateDouble()*8-4)*MAG_DIVIDER;
+    number = (generator->generateDouble()*100-50)*MAG_DIVIDER;
     number = (number < 0) ? number + 0x10000:number;
     data.append((qRound(number) >> 0) & 0xFF);
     data.append((qRound(number) >> 8) & 0xFF);
-    number = (generator->generateDouble()*8-4)*MAG_DIVIDER;
+    number = (generator->generateDouble()*100-50)*MAG_DIVIDER;
     number = (number < 0) ? number + 0x10000:number;
     data.append((qRound(number) >> 0) & 0xFF);
     data.append((qRound(number) >> 8) & 0xFF);

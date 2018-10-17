@@ -8,6 +8,7 @@
 #include <QProcess>
 #include <QRemoteObjectHost>
 #include <QAbstractSeries>
+#include <QTimer>
 
 
 #include "rep_remotebackend_source.h"
@@ -23,11 +24,13 @@ class BackEnd : public QObject
     Q_OBJECT
     Q_PROPERTY(QString serverAddress READ serverAddress NOTIFY serverAddressChanged)
     Q_PROPERTY(bool remotingEnabled READ remotingEnabled WRITE setRemotingEnabled NOTIFY remotingEnabledChanged)
-    Q_PROPERTY(bool remoteControlEnabled READ remoteControlEnabled WRITE setRemoteControlEnabled NOTIFY remoteControlEnabledChanged)
+
     Q_PROPERTY(SensorData accelerationData READ accelerationData NOTIFY accelerationDataChanged)
     Q_PROPERTY(SensorData gyroData READ gyroData NOTIFY gyroDataChanged)
     Q_PROPERTY(SensorData magnetoData READ magnetoData NOTIFY magnetoDataChanged)
     Q_PROPERTY(SensorData powerData READ powerData NOTIFY powerDataChanged)
+
+    Q_PROPERTY(int tabIndex READ tabIndex WRITE setTabIndex NOTIFY tabIndexChanged)
 
 public:
     explicit BackEnd(PlatformControl *controller = nullptr, QObject *parent = nullptr);
@@ -41,15 +44,12 @@ public:
 
     Q_INVOKABLE int storageDepth() const;
 
-    Q_INVOKABLE void updateAcceleration(int axis, QAbstractSeries *series) const;
-    Q_INVOKABLE void updateGyro(int axis, QAbstractSeries *series) const;
-    Q_INVOKABLE void updateMagneto(int axis, QAbstractSeries *series) const;
-    Q_INVOKABLE void updatePower(int axis, QAbstractSeries *series) const;
-
     SensorData accelerationData() const;
     SensorData gyroData() const;
     SensorData magnetoData() const;
     SensorData powerData() const;
+
+    int tabIndex() const;
 
 public Q_SLOTS:
     void processData(const QByteArray &data);
@@ -60,33 +60,30 @@ public Q_SLOTS:
     bool remotingEnabled() const;
     void setRemotingEnabled(bool enable);
 
-    bool remoteControlEnabled() const { return m_remoteControl; }
-    void setRemoteControlEnabled(bool enable) {
-        m_remoteControl = enable;
-        emit remoteControlEnabledChanged(enable);
-    }
-
     void shutdown() const;
     void sleep() const;
     QString test() const;
+    void setTabIndex(int tabIndex);
 
 Q_SIGNALS:
     // Remote stuff
     void remotingEnabledChanged(bool remotingEnabled);
     void serverAddressChanged();
-    void remoteControlEnabledChanged(bool remoteControlEnabled);
 
     void accelerationDataChanged(SensorData sensorData);
     void gyroDataChanged(SensorData sensorData);
     void magnetoDataChanged(SensorData sensorData);
     void powerDataChanged(SensorData sensorData);
 
+    void tabIndexChanged(int tabIndex);
 
 private:
     SensorData m_accelerationData;
     SensorData m_gyroData;
     SensorData m_magnetoData;
     SensorData m_powerData;
+
+    int m_tabIndex;
 
     PlatformControl &m_controller;
 
@@ -105,14 +102,13 @@ class ReadOnlyRemoteBackend : public RemoteBackendSource
 {
     Q_OBJECT
 public:
-    explicit ReadOnlyRemoteBackend(const BackEnd *backend, QObject *parent = nullptr);
+    explicit ReadOnlyRemoteBackend(BackEnd *backend, QObject *parent = nullptr);
 
     QString serverAddress() const { return m_backend->serverAddress(); }
     bool remotingEnabled() const { return m_backend->remotingEnabled(); }
-    void setRemotingEnabled(bool) { }
-
-    bool remoteControlEnabled() const { return m_backend->remoteControlEnabled(); }
-    void setRemoteControlEnabled(bool) { }
+    // We can't disable the remote connection directly because it would crash, therefore we delay it so
+    // that we are sure the event is triggered in the right context
+    void setRemotingEnabled(bool enable) {  if (!enable) QTimer::singleShot(200, this, SLOT(disableRemoting())); }
 
     int accelerationDataAxis() { return m_backend->accelerationDataAxis(); }
     int gyroDataAxis() { return m_backend->gyroDataAxis(); }
@@ -128,8 +124,12 @@ public:
     void shutdown(){ m_backend->shutdown(); }
     void sleep() { m_backend->sleep(); }
 
+    void setTabIndex(int tabIndex) {m_backend->setTabIndex(tabIndex);}
+    int tabIndex() const { return m_backend->tabIndex(); }
+private slots:
+    void disableRemoting(){m_backend->setRemotingEnabled(false);}
 private:
-    const BackEnd *m_backend;
+    BackEnd *m_backend;
 };
 
 

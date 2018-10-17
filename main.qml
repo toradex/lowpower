@@ -34,7 +34,6 @@ ApplicationWindow {
         }
     }
 
-
     Rectangle {
         id: root
         color: window.color
@@ -59,10 +58,6 @@ ApplicationWindow {
             onTriggered: {
                 switch (swipeView.currentIndex) {
                 case 0:
-//                    storageDepth = backend.accelerationData.points - 1;
-//                    backend.updateAcceleration(0, accelerometer.xAxis);
-//                    backend.updateAcceleration(1, accelerometer.yAxis);
-//                    backend.updateAcceleration(2, accelerometer.zAxis);
                     updateAxis(accelerometer.xAxis, backend.accelerationData, 0);
                     updateAxis(accelerometer.yAxis, backend.accelerationData, 1);
                     updateAxis(accelerometer.zAxis, backend.accelerationData, 2);
@@ -84,24 +79,27 @@ ApplicationWindow {
                 }
             }
         }
-//        RemoteMouseIndicator {
-//            id: remoteMouse
-//            x: -1000
-//            visible: x !== -1000
-//            z: 99999999999
 
-//            Connections {
-//                target: backend
-//                onRemotingEnabledChanged: if (!remotingEnabled) remoteMouse.x = -1000
-//            }
+        RemoteMouseIndicator {
+            id: remoteMouse
+            x: -1000
+            visible: x !== -1000
+            z: 99999999999
 
-//            Connections {
-//                target: remoteEventHandler
-//                onRemoteMouseXChanged: if (backend.remoteControlEnabled) remoteMouse.setX(x)
-//                onRemoteMouseYChanged: if (backend.remoteControlEnabled) remoteMouse.setY(y)
-//                onRemoteMouseClicked: if (backend.remoteControlEnabled) remoteMouse.showClick()
-//            }
-//        }
+            Connections {
+                target: backend
+                onRemotingEnabledChanged: if (!remotingEnabled) remoteMouse.x = -1000
+                // If remote object is involved it's not enough to only use a property somehow
+                onTabIndexChanged: swipeView.currentIndex = tabIndex
+            }
+
+            Connections {
+                target: remoteEventHandler
+                onRemoteMouseXChanged: remoteMouse.setX(x)
+                onRemoteMouseYChanged: remoteMouse.setY(y)
+                onRemoteMouseClicked: remoteMouse.showClick()
+            }
+        }
 
         ColumnLayout {
             id: columnLayout
@@ -111,6 +109,7 @@ ApplicationWindow {
                 id: header
                 width: parent.width
                 Layout.alignment: Qt.AlignLeft | Qt.AlignTop
+
                 Image {
                     source: "images/toradexlogo.png"
                     Layout.alignment: Qt.AlignHCenter
@@ -119,6 +118,7 @@ ApplicationWindow {
                 TabBar {
                     id: tabBar
                     currentIndex: swipeView.currentIndex
+                    onCurrentIndexChanged: swipeView.currentIndex = currentIndex
                     Layout.fillWidth: true
 
                     TabButton {
@@ -155,7 +155,7 @@ ApplicationWindow {
                         Layout.maximumWidth: 100
                         Layout.fillHeight: true
 
-                        designator: swipeView.currentItem.designator
+                        //designator: swipeView.currentItem.designator
 
                         sleep.onClicked: backend.sleep();
                         power.onClicked: backend.shutdown()
@@ -166,18 +166,23 @@ ApplicationWindow {
                     Layout.fillHeight: true
                     Layout.fillWidth: true
                     MouseArea {
-                        hoverEnabled: true
+                        id: blockMouse
+                        objectName: "blockMouse"
                         anchors.fill: parent
-                        onEntered: {openGLenabled = false;}
-                        onExited: {openGLenabled = processSettings.webgl;}
+                        hoverEnabled: true
+                        preventStealing: true
+                        propagateComposedEvents: false
+                        // Hack to get rid of crash when mouse goes over OpenGL area
+//                        onEntered: {openGLenabled = false;}
+//                        onExited: {openGLenabled = processSettings.webgl;}
                         SwipeView {
                             id: swipeView
-                            currentIndex: tabBar.currentIndex
+                            objectName: "swipeView"
+                            currentIndex: backend.tabIndex
+                            onCurrentIndexChanged: backend.tabIndex = currentIndex
                             height: parent.height
                             width: parent.width
                             clip: true
-
-
 
                             Accelerometer {
                                 id: accelerometer
@@ -202,7 +207,6 @@ ApplicationWindow {
                             Settings {
                                 id: settings
                             }
-                            onCurrentIndexChanged: console.log("Active index " + currentIndex);
                         }
                     }
                 }

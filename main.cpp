@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
     qmlRegisterType<BackEnd>("com.toradex.examples.backend", 1, 0, "RemoteBackEnd");
     qmlRegisterType<ProcessSettings>("com.toradex.examples.processsettings", 1, 0, "ProcessSettings");
 
+
     if (app.platformName() == QLatin1String("webgl")) {
         processSettings = new ProcessSettings(true, &app);
         RemoteBackendReplica *replica;
@@ -52,6 +53,7 @@ int main(int argc, char *argv[])
             app.processEvents();
 
         backend.reset(replica);
+
     } else {
         processSettings = new ProcessSettings(false, &app);
         /* Switch mock/real implementation */
@@ -70,6 +72,37 @@ int main(int argc, char *argv[])
 
     if (engine.rootObjects().isEmpty())
         return -1;
+
+    if (app.platformName() == QLatin1String("webgl")) {
+        /* Prevent mouse hovering events sent to the QML engine, this prevents us from
+         * a freeze in the QtWebGL App with QtCharts and OpenGL enabled */
+
+        class EventFilter : public QObject {
+        public:
+            EventFilter (QObject *swipeview, QObject *parent = nullptr):
+                QObject(parent), m_swipeview(swipeview) {}
+            bool eventFilter(QObject *o, QEvent *e) override {
+                /* If not under settings tab... */
+                if (m_swipeview->property("currentIndex").toInt() != 4) {
+                    if (e->type() != QEvent::Paint &&
+                            e->type() != QEvent::Show &&
+                            e->type() != QEvent::ShowToParent &&
+                            e->type() != QEvent::Timer &&
+                            e->type() != QEvent::MetaCall)
+                        return true;
+                }
+                return QObject::eventFilter(o, e);
+            }
+        private:
+            QObject *m_swipeview;
+        };
+
+        QObject *rootObject = engine.rootObjects().first();
+        QObject *blockMouse = rootObject->findChild<QObject*>("blockMouse");
+        QObject *swipeView = rootObject->findChild<QObject*>("swipeView");
+        for (auto object : blockMouse->findChildren<QObject*>(QString()))
+            object->installEventFilter(new EventFilter(swipeView, object));
+    }
 
     return app.exec();
 }

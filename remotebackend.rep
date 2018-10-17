@@ -1,14 +1,16 @@
+#include <QString>
 #include <QPointF>
 #include "sensordata.h"
 
 class RemoteBackend {
     PROP(QString serverAddress READONLY)
-    PROP(bool remotingEnabled)
-    PROP(bool remoteControlEnabled)
     PROP(SensorData accelerationData READONLY)
     PROP(SensorData gyroData READONLY)
     PROP(SensorData magnetoData READONLY)
     PROP(SensorData powerData READONLY)
+
+    PROP(bool remotingEnabled READWRITE)
+    PROP(int tabIndex READWRITE)
 
     SLOT(int accelerationDataAxis())
     SLOT(int gyroDataAxis())

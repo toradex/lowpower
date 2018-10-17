@@ -95,19 +95,21 @@ bool RemoteEventHandler::eventFilter(QObject *watched, QEvent *event)
     return QObject::eventFilter(watched, event);
 }
 
-void RemoteEventHandler::handleRemoteMouseEvent(int type, const QPointF &localPos, int buttons, int modifiers)
+void RemoteEventHandler::handleRemoteMouseEvent(int type, const QPointF &localPos, int, int)
 {
     QVariant point;
     QMetaObject::invokeMethod(m_watchedObject.data(), "mapToWindow",
                               Q_RETURN_ARG(QVariant, point),
                               Q_ARG(QVariant, localPos.x()),
                               Q_ARG(QVariant, localPos.y()));
-    QPointF pos = point.toPointF();
 
-    QWindow *w = qApp->allWindows().first();
-    QWindowSystemInterface::handleMouseEvent(w, pos, w->mapToGlobal(pos.toPoint()),
-                                             Qt::MouseButtons(buttons), Qt::KeyboardModifiers(modifiers),
-                                             Qt::MouseEventSynthesizedByApplication);
+    // For this demo we do not sync mouse clicks. Instead we send all events (e.g. tab changed) directly.
+//    QPointF pos = point.toPointF();
+
+//    QWindow *w = qApp->allWindows().first();
+//    QWindowSystemInterface::handleMouseEvent(w, pos, w->mapToGlobal(pos.toPoint()),
+//                                             Qt::MouseButtons(buttons), Qt::KeyboardModifiers(modifiers),
+//                                             Qt::MouseEventSynthesizedByApplication);
 
     emit remoteMouseXChanged(localPos.x());
     emit remoteMouseYChanged(localPos.y());

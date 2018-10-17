@@ -3,9 +3,10 @@ import QtQuick.Controls 2.3
 import QtQuick.Layouts 1.3
 
 Item {
-
+    objectName: "settings"
     Switch {
         id: remoting
+        objectName: "switch"
         anchors.verticalCenter: parent.verticalCenter
         anchors.verticalCenterOffset: -90
         anchors.horizontalCenter: parent.horizontalCenter
@@ -22,21 +23,9 @@ Item {
         }
     }
 
-    Switch {
-        id: remoteControl
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: remoting.bottom
-        text: "Enable Remote Control"
-        checked: backend.remoteControlEnabled
-        visible: backend.remotingEnabled
-        onToggled: {
-            backend.remoteControlEnabled = checked
-        }
-    }
-
     Column {
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.top: remoteControl.bottom
+        anchors.top: remoting.bottom
         anchors.topMargin: 48
         spacing: 16
         visible: backend.remotingEnabled

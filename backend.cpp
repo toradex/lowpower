@@ -27,7 +27,7 @@ static qreal convertData(char byte1, char byte2, qreal divider)
 
 void BackEnd::processData(const QByteArray &data)
 {
-#define GYRO_DIVIDER 16
+#define GYRO_DIVIDER 8
 #define ACC_DIVIDER (8192.0/9.81)
 #define MAG_DIVIDER 10
 #define POWER_DIVIDER 8
@@ -43,9 +43,9 @@ void BackEnd::processData(const QByteArray &data)
     }
 
     /* Do some uggly conversion as done int the original, should maybe fixed later */
-    m_gyroData.push_pop(0, std::fmod(convertData(data[1], data[2], GYRO_DIVIDER), 180));
-    m_gyroData.push_pop(1, std::fmod(convertData(data[3], data[4], GYRO_DIVIDER), 180));
-    m_gyroData.push_pop(2, std::fmod(convertData(data[5], data[6], GYRO_DIVIDER), 180));
+    m_gyroData.push_pop(0, std::fmod(convertData(data[1], data[2], GYRO_DIVIDER) + 180, 360) - 180);
+    m_gyroData.push_pop(1, std::fmod(convertData(data[3], data[4], GYRO_DIVIDER) + 180, 360) - 180);
+    m_gyroData.push_pop(2, std::fmod(convertData(data[5], data[6], GYRO_DIVIDER) + 180, 360) - 180);
 
     m_accelerationData.push_pop(0, convertData(data[7], data[8], ACC_DIVIDER));
     m_accelerationData.push_pop(1, convertData(data[9], data[10], ACC_DIVIDER));
@@ -95,58 +95,6 @@ int BackEnd::storageDepth() const
     return STORAGE_DEPTH;
 }
 
-void BackEnd::updateAcceleration(int axis, QAbstractSeries *series) const
-{
-    QVector<QPointF> points;
-    if (series) {
-        QLineSeries *xySeries = static_cast<QLineSeries *>(series);
-        for (int i = 0; i < m_accelerationData.points(); i++) {
-            points.append(QPointF(i, m_accelerationData.at(axis, m_accelerationData.points() - 1 - i)));
-        }
-        // Use replace instead of clear + append, it's optimized for performance
-        xySeries->replace(points);
-    }
-}
-
-void BackEnd::updateGyro(int axis, QAbstractSeries *series) const
-{
-    QVector<QPointF> points;
-    if (series) {
-        QLineSeries *xySeries = static_cast<QLineSeries *>(series);
-        for (int i = 0; i < m_accelerationData.points(); i++) {
-            points.append(QPointF(i, m_gyroData.at(axis, m_accelerationData.points() - 1 - i)));
-        }
-        // Use replace instead of clear + append, it's optimized for performance
-        xySeries->replace(points);
-    }
-}
-
-void BackEnd::updateMagneto(int axis, QAbstractSeries *series) const
-{
-    QVector<QPointF> points;
-    if (series) {
-        QLineSeries *xySeries = static_cast<QLineSeries *>(series);
-        for (int i = 0; i < m_accelerationData.points(); i++) {
-            points.append(QPointF(i, m_magnetoData.at(axis, m_accelerationData.points() - 1)));
-        }
-        // Use replace instead of clear + append, it's optimized for performance
-        xySeries->replace(points);
-    }
-}
-
-void BackEnd::updatePower(int axis, QAbstractSeries *series) const
-{
-    QVector<QPointF> points;
-    if (series) {
-        QLineSeries *xySeries = static_cast<QLineSeries *>(series);
-        for (int i = 0; i < m_accelerationData.points(); i++) {
-            points.append(QPointF(i, m_powerData.at(axis, m_accelerationData.points() - 1)));
-        }
-        // Use replace instead of clear + append, it's optimized for performance
-        xySeries->replace(points);
-    }
-}
-
 bool BackEnd::remotingEnabled() const
 {
     return !m_remoteAccess.isNull();
@@ -179,12 +127,12 @@ void BackEnd::setRemotingEnabled(bool enable)
         });
         m_remoteAccess->start(QCoreApplication::applicationFilePath(), QStringList() << "-platform" << "webgl", QProcess::ReadOnly);
     } else {
-        m_remoteAccess->kill();
-        m_remoteAccess.clear();
-
         m_backendServer->disableRemoting(m_remoteBackend.data());
         m_backendServer.reset();
         m_remoteBackend.reset();
+
+        m_remoteAccess->kill();
+        m_remoteAccess.clear();
     }
 
     emit remotingEnabledChanged(enable);
@@ -204,6 +152,17 @@ QString BackEnd::test() const
 {
     qDebug() << "test";
     return "Test";
+}
+
+int BackEnd::tabIndex() const
+{
+    return m_tabIndex;
+}
+
+void BackEnd::setTabIndex(int tabIndex)
+{
+    m_tabIndex = tabIndex;
+    emit tabIndexChanged(tabIndex);
 }
 
 SensorData BackEnd::powerData() const
@@ -252,7 +211,7 @@ void BackEnd::updateServerAddress()
     emit serverAddressChanged();
 }
 
-ReadOnlyRemoteBackend::ReadOnlyRemoteBackend(const BackEnd *backend, QObject *parent)
+ReadOnlyRemoteBackend::ReadOnlyRemoteBackend(BackEnd *backend, QObject *parent)
     : RemoteBackendSource(parent)
     , m_backend(backend)
 {
@@ -260,6 +219,6 @@ ReadOnlyRemoteBackend::ReadOnlyRemoteBackend(const BackEnd *backend, QObject *pa
     connect(m_backend, &BackEnd::gyroDataChanged, this, &ReadOnlyRemoteBackend::gyroDataChanged);
     connect(m_backend, &BackEnd::magnetoDataChanged, this, &ReadOnlyRemoteBackend::magnetoDataChanged);
     connect(m_backend, &BackEnd::powerDataChanged, this, &ReadOnlyRemoteBackend::powerDataChanged);
-    connect(m_backend, &BackEnd::remoteControlEnabledChanged, this, &ReadOnlyRemoteBackend::remoteControlEnabledChanged);
     connect(m_backend, &BackEnd::remotingEnabledChanged, this, &ReadOnlyRemoteBackend::remotingEnabledChanged);
+    connect(m_backend, &BackEnd::tabIndexChanged, this, &ReadOnlyRemoteBackend::tabIndexChanged);
 }
