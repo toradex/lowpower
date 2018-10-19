@@ -155,7 +155,7 @@ ApplicationWindow {
                         Layout.maximumWidth: 100
                         Layout.fillHeight: true
 
-                        //designator: swipeView.currentItem.designator
+                        designator: swipeView.currentItem.designator
 
                         sleep.onClicked: backend.sleep();
                         power.onClicked: backend.shutdown()

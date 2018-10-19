@@ -58,12 +58,6 @@ void PlatformControlRpmsg::shutdown()
 
 void PlatformControlRpmsg::sleep()
 {
-    QFile powerState("/sys/power/state");
-    if (!powerState.open(QFile::WriteOnly)) {
-        qWarning() << "Could not open /sys/power/state";
-        return;
-    }
-
-    powerState.write("mem");
-    powerState.close();
+    QString programName("systemctl suspend");
+    QProcess::execute(programName);
 }

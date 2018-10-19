@@ -187,27 +187,24 @@ SensorData BackEnd::accelerationData() const
 
 void BackEnd::updateServerAddress()
 {
-    QMap<int, QString> addresses;
+    QList<QString> addresses;
     for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
         if (iface.flags() & (QNetworkInterface::IsUp | QNetworkInterface::IsRunning)) {
             for (const QNetworkAddressEntry &entry : iface.addressEntries()) {
                 if (entry.ip().protocol() != QAbstractSocket::IPv4Protocol)
                     continue;
 
-                if (iface.humanReadableName().contains(QLatin1String("usb0"), Qt::CaseInsensitive))
-                    addresses.insert(1, entry.ip().toString());
-                else if (iface.humanReadableName().contains(QLatin1String("ethernet"), Qt::CaseInsensitive)
-                         || iface.humanReadableName().contains(QLatin1String("eth0"), Qt::CaseInsensitive))
-                    addresses.insert(2, entry.ip().toString());
-                else if (iface.humanReadableName().contains(QLatin1String("wi-fi"), Qt::CaseInsensitive))
-                    addresses.insert(3, entry.ip().toString());
-                else if (iface.flags().testFlag(QNetworkInterface::IsLoopBack))
-                    addresses.insert(4, entry.ip().toString());
+                if (!iface.flags().testFlag(QNetworkInterface::IsLoopBack))
+                    addresses.append(entry.ip().toString());
             }
         }
     }
 
-    m_serverAddress = addresses.first();
+    m_serverAddress = "";
+    for (auto address : addresses) {
+        m_serverAddress += QString("http://") + address + QString(":8080\n");
+    }
+    qDebug() << m_serverAddress;
     emit serverAddressChanged();
 }
 

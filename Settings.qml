@@ -40,7 +40,7 @@ Item {
         Label {
             anchors.horizontalCenter: parent.horizontalCenter
             font.pixelSize: 24
-            text: "http://" + backend.serverAddress + ":8080"
+            text: backend.serverAddress
             font.bold: true
         }
     }
